@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedure Table</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gordita:wght@400;700&display=swap');
+        body {
+            font-family: 'Gordita', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .categories {
+            width: 30%;
+            background-color: #325953;
+            padding: 20px;
+            color: #fff;
+        }
+        .categories h2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #C8F169;
+        }
+        .categories ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .categories li {
+            padding: 15px;
+            cursor: pointer;
+            font-weight: bold;
+            border-bottom: 1px solid #7DB8AE;
+            transition: background-color 0.3s ease;
+        }
+        .categories li:hover {
+            background-color: #0E848D;
+        }
+        .info {
+            width: 70%;
+            padding: 20px;
+        }
+        .procedure-button {
+            display: inline-block;
+            margin: 5px 0;
+            padding: 10px 20px;
+            background-color: #93D8C9;
+            color: #325953;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+        .procedure-button:hover {
+            background-color: #C8F169;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="categories">
+            <h2>Departments</h2>
+            <ul id="departmentList">
+                <li onclick="showProcedures('Brand & Comms')">Brand & Comms</li>
+                <li onclick="showProcedures('Growth Marketing')">Growth Marketing</li>
+                <li onclick="showProcedures('Finance')">Finance</li>
+                <li onclick="showProcedures('Legal')">Legal</li>
+                <li onclick="showProcedures('Operations')">Operations</li>
+                <li onclick="showProcedures('People')">People</li>
+                <li onclick="showProcedures('Recruitment')">Recruitment</li>
+                <li onclick="showProcedures('Sales')">Sales</li>
+            </ul>
+        </div>
+        <div class="info" id="info">
+            <p>Select a department to see procedures.</p>
+        </div>
+    </div>
+
+    <script>
+        // Replace placeholder links with real SharePoint URLs
+        const procedureData = {
+            "Brand & Comms": [
+                { name: "Brand Guidelines Procedure", link: "#" },
+                { name: "Content Publishing Workflow", link: "#" }
+            ],
+            "Growth Marketing": [
+                { name: "Lead Generation Workflow", link: "#" },
+                { name: "Campaign Launch Checklist", link: "#" }
+            ],
+            "Finance": [
+                { name: "Expense Reimbursement Procedure", link: "#" },
+                { name: "Invoice Approval Process", link: "#" }
+            ],
+            "Legal": [
+                { name: "Contract Review Procedure", link: "#" },
+                { name: "Compliance Reporting Guidelines", link: "#" }
+            ],
+            "Operations": [
+                { name: "Incident Management Procedure", link: "#" },
+                { name: "Office Onboarding Checklist", link: "#" }
+            ],
+            "People": [
+                { name: "Employee Onboarding Procedure", link: "#" },
+                { name: "Performance Review Cycle", link: "#" }
+            ],
+            "Recruitment": [
+                { name: "Hew Hire Procedure", link: "#" },
+                { name: "Interview Feedback Guidelines", link: "#" }
+            ],
+            "Sales": [
+                { name: "Sales Deal Approval Process", link: "#" },
+                { name: "CRM Data Entry Procedure", link: "#" }
+            ]
+        };
+
+        function showProcedures(department) {
+            const procedures = procedureData[department] || [];
+            let html = `<h2>${department}</h2>`;
+            if (procedures.length === 0) {
+                html += '<p>No procedures available yet.</p>';
+            } else {
+                procedures.forEach(proc => {
+                    html += `<a href="${proc.link}" target="_blank" class="procedure-button">${proc.name}</a><br>`;
+                });
+            }
+            document.getElementById('info').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
