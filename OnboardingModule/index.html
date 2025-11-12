@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ALLSTARSIT Galaxy — v8 (dataset integrated)</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{
+    --text:#E9FFF5;
+    --orbit: rgba(255,255,255,.06);
+    --btnBg:#111; --btnBorder:#2e6d5e; --btnText:#E9FFF5;
+  }
+  html,body,#root{height:100%;margin:0}
+  body{
+    color:var(--text);
+    background:#000;
+    background: radial-gradient(900px 700px at 50% 40%, #0b0b0b 0%, #000 65%, #000 100%);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    overflow:hidden;
+  }
+  h1{margin:14px 0 8px;text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .universe{position:relative; width:100vw; height:92vh;}
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.88); display:flex; align-items:center; justify-content:center; z-index:50;
+  }
+  .modal{
+    width:min(980px, calc(100% - 32px)); border:1px solid #1a3b32; border-radius:16px; padding:22px;
+    background:rgba(7,14,12,.96); box-shadow:0 24px 90px rgba(0,0,0,.65);
+  }
+  .close{background:#0e2d24; border:1px solid #325953; color:#E9FFF5; padding:10px 14px; border-radius:12px; cursor:pointer;}
+  .kbd{font:12px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#0e2d24; border:1px solid #325953; border-radius:6px; padding:2px 6px}
+</style>
+</head>
+<body>
+  <h1>ALLSTARSIT Galaxy</h1>
+  <div id="root"></div>
+
+<script type="text/babel">
+const TAU = Math.PI * 2;
+const rand = (a,b)=> a + Math.random()*(b-a);
+
+const INDUSTRY_ORBIT = {
+  "Security": 240,
+  "Fintech":  330,
+  "Media":    420,
+  "Data":     510,
+  "Telco":    600,
+  "Other":    690,
+};
+
+const PLANET_THEMES = [
+  { light:"#f6ead2", mid:"#d7b384", dark:"#8a5f39" },
+  { light:"#dbeeff", mid:"#9bbbe4", dark:"#4a6ea6" },
+  { light:"#e3ffe7", mid:"#a2e0b0", dark:"#4c8a67" },
+  { light:"#ffe6f0", mid:"#eea2c1", dark:"#a15479" },
+  { light:"#fff1d8", mid:"#f1c06c", dark:"#a76e2a" },
+  { light:"#ebe5ff", mid:"#b9aaff", dark:"#6a62c5" },
+];
+const pickTheme = (i)=> PLANET_THEMES[i % PLANET_THEMES.length];
+
+function TextureDefs(){
+  return (
+    <defs>
+      {[0.7, 0.9, 1.3, 1.8, 2.4, 3.0].map((bf, i)=>(
+        <filter key={i} id={`tex-${i}`} x="-50%" y="-50%" width="200%" height="200%">
+          <feTurbulence type="fractalNoise" baseFrequency={bf/100} numOctaves="3" seed={i*11+7} result="noise"/>
+          <feColorMatrix in="noise" type="matrix"
+            values="1 0 0 0 0,
+                    0 1 0 0 0,
+                    0 0 1 0 0,
+                    0 0 0 0.55 0" />
+          <feComposite operator="in" in2="SourceAlpha"/>
+          <feGaussianBlur stdDeviation="0.6"/>
+          <feBlend mode="overlay" in2="SourceGraphic"/>
+        </filter>
+      ))}
+      <radialGradient id="sunCore" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"  stopColor="#fff2a6"/>
+        <stop offset="55%" stopColor="#ffd36b"/>
+        <stop offset="100%" stopColor="#f5a94a"/>
+      </radialGradient>
+      <filter id="sunGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="24" result="blur"/>
+        <feMerge>
+          <feMergeNode in="blur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+  );
+}
+
+const INDUSTRY_MAP = {
+  "Imperva":"Security","CyberArk":"Security","CATO":"Security","ARMO":"Security","Morphisec":"Security","Delinea":"Security","CybeReady":"Security","HuntersAI":"Security","Securing Sam":"Security","Utimaco":"Security","Varonis (UA)":"Security","Varonis (UAE)":"Security","Varonis FZ":"Security",
+  "Bolt":"Fintech","Bank Hapoalim":"Fintech","Bank Mizrahi":"Fintech","Bank of Jerusalem":"Fintech","Zesty":"Fintech","VCita":"Fintech","ChargeAfter":"Fintech","Wiv":"Fintech",
+  "Kaltura-EOR":"Media","Kaltura-EOR-PL":"Media","Fiverr":"Media","Yotpo":"Media","Harmonic":"Media","Boards":"Media",
+  "Windward":"Data","Revuze":"Data","Quicklizard":"Data","EdgeCloudLink":"Data","Natural Intelligence":"Data","Abra":"Data","Sloyd.ai":"Data","Roadz":"Data","CarbonChain":"Data",
+  "Amdocs":"Telco","Amdocs-EOR":"Telco","Parallel Wireless":"Telco","Rafael (IS)":"Telco","Rafael (UAE)":"Telco","Spot by NetApp (IS)":"Telco","Spot by NetApp (UA)":"Telco",
+  "Imagry (GE)":"Other","Imagry (IS)":"Other","Univeris":"Other","Netafim (IS)":"Other","Netafim (UA)":"Other","Juganu":"Other","Micronet":"Other","Optitex":"Other","Toperation":"Other","Motiv8AI":"Other","Muvan.AI":"Other","Algopeak":"Other","PeerSpot":"Other","Intel":"Other","Beaconcure":"Other","Beewise":"Other","Abbott (IS)":"Other","Rafael (IS)":"Telco","Rafael (UAE)":"Telco"
+};
+
+const RAW = [
+["Abbott (IS)",0,"","",""],
+["Abra",2,"2020","883","Israel"],
+["Algopeak",0,"","",""],
+["Amdocs",23,"1982","29000","Chesterfield, Missouri, USA"],
+["Anodot",1,"","",""],
+["ARMO",1,"2019","81","Palo Alto, California"],
+["Bank Hapoalim",11,"1921","52532","Israel"],
+["Bank Mizrahi",1,"","",""],
+["Bank of Jerusalem",2,"","",""],
+["BankMizrahi",3,"","",""],
+["Beaconcure",4,"2016","39","Boston, Massachusetts"],
+["Beewise",3,"2018","150","San Ramon, CA"],
+["Boards",2,"","",""],
+["Bolt",20,"2020","978","Singapore"],
+["CarbonChain",2,"","",""],
+["CATO",27,"2015","1400","Israel"],
+["ChargeAfter",2,"2017","~200","Israel"],
+["CyberArk",3,"1999","~3 800","Israel"],
+["CybeReady",1,"2015","~100","Israel"],
+["Delinea",4,"2004","~1 500","USA"],
+["Driivz",2,"2012","~150","Israel"],
+["EdgeCloudLink",1,"2020","~10","USA"],
+["Fiverr",12,"2010","~760","Tel Aviv, Israel"],
+["Fragomen",4,"1951","~6,000","New York City, USA"],
+["Hailo",7,"2017","~260","Tel Aviv, Israel"],
+["Harmonic",5,"—","—","—"],
+["HuntersAI",2,"2018","~240","Tel Aviv, Israel"],
+["Imagry (GE)",32,"2015","51-200","San Jose, USA / Haifa, Israel"],
+["Imagry (IS)",2,"2015","51-200","Haifa, Israel"],
+["Imperva",39,"2002","~1,300","San Mateo, USA"],
+["Intel",1,"1968","~83,300","Santa Clara, USA"],
+["Juganu",2,"2011","~70","Or Yehuda, Israel"],
+["Kaltura-EOR",2,"2006","~500+","New York City, USA"],
+["Kaltura-EOR-PL",10,"2006","~500+","New York City, USA"],
+["Micronet",1,"(data not found)","(data not found)","Israel"],
+["Morphisec",10,"2014","~110","Be’er Sheva, Israel"],
+["Motiv8AI",1,"(data not found)","(data not found)","Israel"],
+["Muvan.AI",1,"(data not found)","(data not found)","Israel"],
+["Natural Intelligence",3,"(data not found)","(data not found)","Israel"],
+["Netafim (IS)",6,"1965","~11,000","Netanya, Israel"],
+["Netafim (UA)",1,"1965","~11,000","Israel / Ukraine presence"],
+["Optitex",2,"1988","~200","Israel"],
+["Parallel Wireless",0,"2012","~501-1,000","Nashua, New Hampshire, USA"],
+["PeerSpot",0,"2011","~100","New York, NY, USA"],
+["Quicklizard",0,"2010","~100-200","Bnei Brak, Israel"],
+["Rafael (IS)",0,"1948","~10,000","Haifa, Israel"],
+["Rafael (UAE)",0,"1948 (parent)","~10,000 (global)","UAE branch, United Arab Emirates"],
+["Revuze",4,"","",""],
+["Roadz",1,"","",""],
+["Securing Sam",0,"","",""],
+["Sloyd.ai",1,"","",""],
+["Spot by NetApp (IS)",1,"2015","","Tel Aviv, Israel"],
+["Spot by NetApp (UA)",3,"","",""],
+["Toperation",1,"","",""],
+["Univeris",5,"1991","~51-200","Toronto, Canada"],
+["Utimaco",3,"1983","~500+","Aachen, Germany"],
+["Varonis (UA)",43,"2005","~2,100","Ukraine (R&D presence)"],
+["Varonis (UAE)",4,"2005","~2,100","UAE (regional office)"],
+["Varonis FZ",0,"2005","~2,100","Dubai, UAE (free zone)"],
+["VCita",1,"2011","~150-200","Tel Aviv, Israel"],
+["Windward",14,"2015","~300-400","Tel Aviv, Israel"],
+["Wiv",2,"2020","~50","Tel Aviv, Israel"],
+["Yotpo",20,"2011","~900+","New York City, USA / Tel Aviv"],
+["Zesty",1,"2016","~30-50","Tel Aviv, Israel"],
+["ZIM",2,"","",""],
+["_empty",5,"","",""]
+];
+
+function toClient([name,count,founded,employees,hq], idx){
+  const c = Number(isNaN(count) ? 0 : count);
+  const industry = INDUSTRY_MAP[name] || "Other";
+  const n = (name==="_empty") ? "" : name;
+  return {
+    name:n, count:c, founded: (founded||"—"), hq:(hq||"—"),
+    industry, theme: pickTheme(idx)
+  };
+}
+const CLIENTS = RAW.map(toClient);
+
+function useStars(count){
+  return React.useMemo(()=>{
+    const w = window.innerWidth, h = window.innerHeight*0.92;
+    return Array.from({length:count}).map(()=> ({
+      x: Math.random()*w, y: Math.random()*h, r: Math.random()*1.6+0.4, o: Math.random()*0.82+0.08
+    }));
+  }, []);
+}
+
+function sizeFromCount(n){
+  const c = Number(n || 0);
+  if (c >= 40) return 96;
+  if (c >= 30) return 86;
+  if (c >= 20) return 78;
+  if (c >= 10) return 68;
+  if (c >= 5)  return 60;
+  if (c >= 2)  return 52;
+  if (c >= 1)  return 46;
+  return 36;
+}
+
+function fontSizeFor(name, R){
+  if(!name) return 0;
+  const base = Math.min(24, Math.max(12, R * 0.40));
+  const penalty = Math.max(0, (name.length - 12) * 0.35);
+  return Math.max(11, base - penalty);
+}
+
+function placeOnOrbit(items, radius){
+  const sorted=[...items]
+    .map((it,i)=>({...it, size:sizeFromCount(it.count), theme:it.theme || pickTheme(i)}))
+    .sort((a,b)=> (b.size)-(a.size));
+  const placed=[];
+  const minGap = (d)=> (d+30)/radius;
+  for (const it of sorted){
+    let tryCount=0, angle, ok=false;
+    while(tryCount++<8000 && !ok){
+      angle = Math.random()*TAU;
+      ok = placed.every(p=>{
+        const diff = Math.abs(Math.atan2(Math.sin(angle-p.angle), Math.cos(angle-p.angle)));
+        return diff > Math.max(minGap(it.size), minGap(p.size));
+      });
+    }
+    if(!ok && placed.length){ angle = placed[placed.length-1].angle + minGap(it.size) + 0.08; }
+    placed.push({...it, angle});
+  }
+  return placed;
+}
+
+function Galaxy(){
+  const [modal, setModal] = React.useState(null);
+  const stars = useStars(640);
+
+  const buckets = React.useMemo(()=>{
+    const map = new Map();
+    for(const c of CLIENTS){
+      const key = INDUSTRY_ORBIT[c.industry] ? c.industry : "Other";
+      if(!map.has(key)) map.set(key, []);
+      map.get(key).push(c);
+    }
+    return [...map.entries()].map(([industry, list])=>{
+      const radius = INDUSTRY_ORBIT[industry];
+      const withAngles = placeOnOrbit(list, radius);
+      return { industry, radius, planets: withAngles };
+    }).sort((a,b)=> a.radius-b.radius);
+  }, []);
+
+  const [t, setT] = React.useState(0);
+  React.useEffect(()=>{
+    let raf;
+    const loop = (ts)=>{ setT(ts/1000); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return ()=> cancelAnimationFrame(raf);
+  },[]);
+
+  const w = window.innerWidth, h = (window.innerHeight*0.92);
+  const center = { x: w/2, y: h/2 };
+  const speedFor = (r)=> 0.022 * (320 / Math.max(240, r));
+
+  const openProfile = (p, industry)=> {
+    if ((p.count||0) > 0 && p.name) setModal({ ...p, industry });
+  }
+
+  return (
+    <>
+      <svg className="universe" width="100%" height="100%">
+        {stars.map((s,i)=>(
+          <circle key={'s'+i} cx={s.x} cy={s.y} r={s.r} fill="rgba(255,255,255,.85)" opacity={s.o}/>
+        ))}
+
+        {Object.values(INDUSTRY_ORBIT).map((r,i)=>(
+          <circle key={'o'+r} cx={center.x} cy={center.y} r={r}
+                  stroke="var(--orbit)" strokeDasharray="1 18" fill="none"/>
+        ))}
+
+        <TextureDefs/>
+        <circle cx={center.x} cy={center.y} r="180" fill="url(#sunCore)" filter="url(#sunGlow)">
+          <animate attributeName="r" values="176;186;176" dur="5s" repeatCount="indefinite"/>
+        </circle>
+        <text x={center.x} y={center.y+8} textAnchor="middle" fontWeight="900" fontSize="30" fill="#3b2a00" style={{letterSpacing:".02em"}}>Business Team</text>
+
+        {buckets.flatMap((b,bi)=>{
+          const spd = speedFor(b.radius);
+          return b.planets.map((p,pi)=>{
+            const angle = p.angle + (t*spd);
+            const x = center.x + Math.cos(angle)*(b.radius);
+            const y = center.y + Math.sin(angle)*(b.radius);
+            const R = p.size;
+            const theme = p.theme || pickTheme(pi);
+            const keyId = `${b.industry}-${p.name || 'anon'}-${bi}-${pi}`;
+            const showName = (p.count||0) > 0 && !!p.name;
+            const btnWidth = 62, btnHeight = 24;
+            const labelY = y + R + 22;
+            const fz = fontSizeFor(p.name, R);
+            const texId = `tex-${(bi+pi)%6}`;
+
+            return (
+              <g key={keyId}>
+                <circle cx={x+4} cy={y+7} r={R} fill="rgba(0,0,0,.55)"/>
+                <defs>
+                  <radialGradient id={`pg-${keyId}`}>
+                    <stop offset="0%"  stopColor={theme.light}/>
+                    <stop offset="70%" stopColor={theme.mid}/>
+                    <stop offset="100%" stopColor={theme.dark}/>
+                  </radialGradient>
+                </defs>
+                <circle cx={x} cy={y} r={R} fill={`url(#pg-${keyId})`} stroke="rgba(255,255,255,.2)" filter={`url(#${texId})`}/>
+                <ellipse cx={x} cy={y- R*0.18} rx={R*0.95} ry={R*0.34} fill="rgba(255,255,255,.10)"/>
+                <ellipse cx={x} cy={y+ R*0.22} rx={R*0.85} ry={R*0.26} fill="rgba(0,0,0,.18)"/>
+
+                {showName && (
+                  <text x={x} y={y + fz*0.35} fontSize={fz} textAnchor="middle" fill="#FFFFFF" fontWeight="800">
+                    {p.name}
+                  </text>
+                )}
+
+                {showName && (
+                  <g style={{cursor:'pointer'}} onClick={()=>openProfile(p, b.industry)}>
+                    <rect x={x - btnWidth/2} y={labelY - btnHeight/2} rx="9" ry="9" width={btnWidth} height={btnHeight}
+                          fill="var(--btnBg)" stroke="var(--btnBorder)"/>
+                    <text x={x} y={labelY + 5} textAnchor="middle" fontSize="13" fill="var(--btnText)">click</text>
+                  </g>
+                )}
+              </g>
+            );
+          });
+        })}
+      </svg>
+
+      {modal && (
+        <div className="modal-backdrop" onClick={(e)=>{ if(e.target===e.currentTarget) setModal(null); }}>
+          <div className="modal">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12, marginBottom:12}}>
+              <div>
+                <div style={{fontSize:26, fontWeight:700}}>{modal.name}</div>
+                <div style={{opacity:.75}}>Client profile</div>
+              </div>
+              <button className="close" onClick={()=>setModal(null)}>Close</button>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:14, marginBottom:12}}>
+              <div>
+                <div style={{fontSize:12,letterSpacing:'.08em',color:'#9fe8cc',textTransform:'uppercase'}}>Орбіта (індустрія)</div>
+                <div style={{fontSize:18}}>{modal.industry||'—'}</div>
+              </div>
+              <div>
+                <div style={{fontSize:12,letterSpacing:'.08em',color:'#9fe8cc',textTransform:'uppercase'}}>Координати (HQ)</div>
+                <div style={{fontSize:18}}>{modal.hq||'—'}</div>
+              </div>
+              <div>
+                <div style={{fontSize:12,letterSpacing:'.08em',color:'#9fe8cc',textTransform:'uppercase'}}>Дата створення компанії</div>
+                <div style={{fontSize:18}}>{modal.founded||'—'}</div>
+              </div>
+            </div>
+            <div style={{opacity:.7, fontSize:13}}>
+              Назви показуються лише якщо <span className="kbd">count &gt; 0</span>. Розмір планети залежить від кількості людей.
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Galaxy/>);
+</script>
+</body>
+</html>
